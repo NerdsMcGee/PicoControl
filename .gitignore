@@ -1,0 +1,18 @@
+# --- private: never commit ---
+pico_secrets.py
+macro.json
+
+# --- personal macros / backups ---
+backups/
+*_backup.py
+*.bak
+load ns2.json
+
+# --- build output ---
+.buildenv/
+build/
+dist/
+*.spec
+__pycache__/
+*.pyc
+release/
