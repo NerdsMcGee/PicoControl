@@ -130,6 +130,20 @@ def _report_for(ch):
     return None  # unsupported char (e.g. non-ASCII) -> skipped
 
 
+def check_hid_library():
+    """Fail early with a clear message if USB keyboard support is missing."""
+    import machine
+    if not hasattr(machine, "USBDevice"):
+        raise RuntimeError("This MicroPython build has no USB device support -- "
+                           "flash MicroPython v1.25+ built for the Pico 2 W")
+    try:
+        import usb.device.keyboard  # noqa: F401
+    except ImportError:
+        raise RuntimeError("USB keyboard library missing -- run: "
+                           "mpremote mip install usb-device-keyboard "
+                           "(see README, Pico setup step 2)")
+
+
 def make_keyboard():
     import usb.device
     from usb.device.keyboard import KeyboardInterface
@@ -303,6 +317,7 @@ def serve(ip, kbd):
 
 # --- Main ----------------------------------------------------------
 def main():
+    check_hid_library()          # before WiFi, so a missing library fails fast
     ip = wifi_connect()
     print("WiFi up, IP =", ip)
     blink(2, 150, 150)           # 2 slow blinks = WiFi connected

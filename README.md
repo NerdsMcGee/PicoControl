@@ -18,10 +18,21 @@ The Pico plugs into the target device as an ordinary USB keyboard. Your PC sends
 ## Pico setup
 
 1. Flash stock **MicroPython (v1.25+)** for the Pico 2 W. (I used Thonny.)
-2. Install the HID keyboard library:
-   ```
-   mpremote mip install usb-device-keyboard
-   ```
+2. **Install the USB keyboard library. This step is required.** `main.py` won't start without it, and it isn't included with MicroPython. Use either option:
+
+   - **With mpremote** (`pip install mpremote` if you don't have it). With the Pico connected and your PC online, run:
+     ```
+     mpremote mip install usb-device-keyboard
+     ```
+   - **From Thonny's shell.** The Pico downloads the library itself, so it needs to join your WiFi first:
+     ```python
+     import network, time, mip
+     w = network.WLAN(network.STA_IF); w.active(True); w.connect("your-wifi-name", "your-wifi-password")
+     while not w.isconnected(): time.sleep(0.5)
+     mip.install("usb-device-keyboard")
+     ```
+
+   To check it worked, run `mpremote ls :lib/usb/device`, or look in the Pico's `lib/usb/device` folder in Thonny's Files view. You should see `keyboard.py`.
 3. Copy `pico_secrets.example.py` to `pico_secrets.py` and fill in your WiFi details and a long random token:
    ```
    python -c "import secrets; print(secrets.token_urlsafe(24))"
@@ -97,6 +108,19 @@ Any payload is typed as text, except these single-command payloads:
 In typed text, `\n` is Enter, `\r` is keypad Enter, `\t` is Tab and `\b` is Backspace. Characters outside US-layout ASCII are skipped.
 
 The Pico closes the connection when it has finished typing, so clients can wait for the close to know the text is done.
+
+## Troubleshooting
+
+Messages from the Pico appear in Thonny's shell or in `mpremote repl` and start with `FATAL:`. A fast continuous LED blink means one of these happened.
+
+| Message | Fix |
+|---|---|
+| `USB keyboard library missing` or `No module named 'usb'` | Do Pico setup step 2, then reset the Pico. |
+| `This MicroPython build has no USB device support` | Flash MicroPython v1.25 or newer built for the **Pico 2 W**. CircuitPython won't work. |
+| `pico_secrets.py missing` | Do steps 3–4: create `pico_secrets.py` and copy it onto the Pico next to `main.py`. |
+| `WiFi connect failed` | Check the WiFi name and password in `pico_secrets.py`. The Pico only supports 2.4 GHz networks. |
+| 3 quick blinks when sending | The token in Pico Control doesn't match `AUTH_TOKEN` in `pico_secrets.py`. |
+| Characters missing on the target | Raise **Key delay (ms)** in Pico Control. |
 
 ## Security note
 
